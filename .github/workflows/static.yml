@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Contributors</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
+        .radio-label {
+            position: relative;
+            padding-left: 30px;
+            cursor: pointer;
+        }
+
+        .radio-label::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007BFF; /* Border color for radio button */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        input[type="radio"]:checked + .radio-label::before {
+            background-color: #007BFF; /* Background color when selected */
+        }
+
+        input[type="radio"]:disabled + .radio-label {
+            color: #ccc; /* Text color for disabled radio button */
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cloud.squidex.io/scripts/editor-sdk.js"></script>
+</head>
+
+<body>
+    <div>
+        <div class="radio-group" id="ContentManagerGroup">
+            <h2>Content Managers</h2>
+        </div>
+        <div class="radio-group" id="ContentCreatorGroup">
+            <h2>Content Creators</h2>
+        </div>
+    </div>
+    <script type="text/javascript">
+        $(function () {
+            let field = new SquidexFormField();
+            let params = getQueryParameters();
+            let url = params.url || 'https://squidex2108.azurewebsites.net/api/apps/sfc/contributors';
+            let defaultValue = [];
+
+            function getQueryParameters(str) {
+                return (str || document.location.search).replace(/(^\?)/, '').split("&").map(function (n) {
+                    return n = n.split("="), this[n[0]] = n[1], this;
+                }.bind({}))[0];
+            }
+
+            var contentManagerContainer = $("#ContentManagerGroup");
+            var contentCreatorContainer = $("#ContentCreatorGroup");
+
+            function initSource() {
+                // Fetch JSON data from the provided URL
+                $.getJSON(url, function (data) {
+                    $.each(data.items, function (i, item) {
+                        let contributorName = item.contributorName;
+                        let role = item.role;
+
+                        // Create a radio button element for each contributor name
+                        let radio = $("<input type='radio'/>")
+                            .attr("id", "radio_" + i)
+                            .attr("name", role) // Use the role as the radio button group name
+                            .attr("value", contributorName)
+                            .prop("checked", defaultValue.includes(contributorName));
+
+                        let label = $("<label class='radio-label'/>")
+                            .attr("for", "radio_" + i)
+                            .text(contributorName);
+
+                        // Add the radio button to the appropriate container based on the role
+                        if (role === "Content Manager") {
+                            contentManagerContainer.append(radio);
+                            contentManagerContainer.append(label);
+                        } else if (role === "Content Creator") {
+                            contentCreatorContainer.append(radio);
+                            contentCreatorContainer.append(label);
+                        }
+
+                        // Add change event listener to handle radio button changes
+                        radio.on("change", function () {
+                            updateSelectedContributors();
+                        });
+                    });
+
+                    // Update the selected contributors based on default values
+                    updateSelectedContributors();
+                });
+            }
+
+            function updateSelectedContributors() {
+                let selectedContributors = [];
+
+                // Find the checked radio buttons and add their values (contributor names) to the selectedContributors array
+                contentManagerContainer.find("input[type='radio']:checked").each(function () {
+                    selectedContributors.push($(this).val());
+                });
+
+                contentCreatorContainer.find("input[type='radio']:checked").each(function () {
+                    selectedContributors.push($(this).val());
+                });
+
+                // Update the field value with the selected contributors
+                field.valueChanged(selectedContributors);
+            }
+
+            field.onDisabled(function (disabled) {
+                contentManagerContainer.find("input[type='radio']").prop("disabled", disabled);
+                contentCreatorContainer.find("input[type='radio']").prop("disabled", disabled);
+            });
+
+            field.onValueChanged(function (value) {
+                // Update the default value and select/deselect radio buttons accordingly
+                defaultValue = value || [];
+                contentManagerContainer.find("input[type='radio']").each(function () {
+                    let contributorName = $(this).val();
+                    $(this).prop("checked", defaultValue.includes(contributorName));
+                });
+
+                contentCreatorContainer.find("input[type='radio']").each(function () {
+                    let contributorName = $(this).val();
+                    $(this).prop("checked", defaultValue.includes(contributorName));
+                });
+            });
+
+            // Initialize the source data and radio buttons
+            initSource();
+        });
+    </script>
+</body>
+
+</html>
