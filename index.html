@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Contributors</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,43 +14,29 @@
             margin-bottom: 10px;
         }
 
-        .radio-group {
-            margin-bottom: 20px;
+        select {
+            width: 30%;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #000; /* Add a black border */
+            border-radius: 4px;
+            appearance: none; /* Remove default dropdown arrow in some browsers */
+            background-color: #fff; /* Set the background color to white */
+            color: #333; /* Set the text color */
         }
 
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input[type="radio"] {
-            display: none;
-        }
-
-        .radio-label {
+        .select-wrapper {
             position: relative;
-            padding-left: 30px;
-            cursor: pointer;
         }
 
-        .radio-label::before {
-            content: "";
+        .select-wrapper::after {
+            content: '\25BC'; /* Unicode character for a down arrow */
+            font-size: 14px;
             position: absolute;
-            left: 0;
-            top: 2px;
-            width: 20px;
-            height: 20px;
-            border: 2px solid #007BFF; /* Border color for radio button */
-            border-radius: 50%;
-            background-color: white;
-        }
-
-        input[type="radio"]:checked + .radio-label::before {
-            background-color: #007BFF; /* Background color when selected */
-        }
-
-        input[type="radio"]:disabled + .radio-label {
-            color: #ccc; /* Text color for disabled radio button */
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            color: #333; /* Set the arrow color */
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -60,11 +45,10 @@
 
 <body>
     <div>
-        <div class="radio-group" id="ContentManagerGroup">
-            <h2>Content Managers</h2>
-        </div>
-        <div class="radio-group" id="ContentCreatorGroup">
-            <h2>Content Creators</h2>
+        <div class="select-wrapper">
+            <select id="ContributorsDropdown">
+                <option value="" disabled selected>Choose from the list</option>
+            </select>
         </div>
     </div>
     <script type="text/javascript">
@@ -72,7 +56,7 @@
             let field = new SquidexFormField();
             let params = getQueryParameters();
             let url = params.url || 'https://squidex2108.azurewebsites.net/api/apps/sfc/contributors';
-            let defaultValue = [];
+            let defaultValue = "";
 
             function getQueryParameters(str) {
                 return (str || document.location.search).replace(/(^\?)/, '').split("&").map(function (n) {
@@ -80,83 +64,50 @@
                 }.bind({}))[0];
             }
 
-            var contentManagerContainer = $("#ContentManagerGroup");
-            var contentCreatorContainer = $("#ContentCreatorGroup");
+            var contributorsDropdown = $("#ContributorsDropdown");
 
             function initSource() {
                 // Fetch JSON data from the provided URL
                 $.getJSON(url, function (data) {
                     $.each(data.items, function (i, item) {
                         let contributorName = item.contributorName;
-                        let role = item.role;
 
-                        // Create a radio button element for each contributor name
-                        let radio = $("<input type='radio'/>")
-                            .attr("id", "radio_" + i)
-                            .attr("name", role) // Use the role as the radio button group name
+                        // Create an option element for each contributor name
+                        let option = $("<option/>")
                             .attr("value", contributorName)
-                            .prop("checked", defaultValue.includes(contributorName));
-
-                        let label = $("<label class='radio-label'/>")
-                            .attr("for", "radio_" + i)
                             .text(contributorName);
 
-                        // Add the radio button to the appropriate container based on the role
-                        if (role === "Content Manager") {
-                            contentManagerContainer.append(radio);
-                            contentManagerContainer.append(label);
-                        } else if (role === "Content Creator") {
-                            contentCreatorContainer.append(radio);
-                            contentCreatorContainer.append(label);
-                        }
-
-                        // Add change event listener to handle radio button changes
-                        radio.on("change", function () {
-                            updateSelectedContributors();
-                        });
+                        // Append the option to the dropdown
+                        contributorsDropdown.append(option);
                     });
 
-                    // Update the selected contributors based on default values
-                    updateSelectedContributors();
+                    // Set the default selected value
+                    contributorsDropdown.val(defaultValue);
+
+                    // Add change event listener to handle dropdown changes
+                    contributorsDropdown.on("change", function () {
+                        defaultValue = $(this).val();
+                        updateSelectedContributor();
+                    });
                 });
             }
 
-            function updateSelectedContributors() {
-                let selectedContributors = [];
-
-                // Find the checked radio buttons and add their values (contributor names) to the selectedContributors array
-                contentManagerContainer.find("input[type='radio']:checked").each(function () {
-                    selectedContributors.push($(this).val());
-                });
-
-                contentCreatorContainer.find("input[type='radio']:checked").each(function () {
-                    selectedContributors.push($(this).val());
-                });
-
-                // Update the field value with the selected contributors
-                field.valueChanged(selectedContributors);
+            function updateSelectedContributor() {
+                // Update the field value with the selected contributor
+                field.valueChanged(defaultValue);
             }
 
             field.onDisabled(function (disabled) {
-                contentManagerContainer.find("input[type='radio']").prop("disabled", disabled);
-                contentCreatorContainer.find("input[type='radio']").prop("disabled", disabled);
+                contributorsDropdown.prop("disabled", disabled);
             });
 
             field.onValueChanged(function (value) {
-                // Update the default value and select/deselect radio buttons accordingly
-                defaultValue = value || [];
-                contentManagerContainer.find("input[type='radio']").each(function () {
-                    let contributorName = $(this).val();
-                    $(this).prop("checked", defaultValue.includes(contributorName));
-                });
-
-                contentCreatorContainer.find("input[type='radio']").each(function () {
-                    let contributorName = $(this).val();
-                    $(this).prop("checked", defaultValue.includes(contributorName));
-                });
+                // Update the default value and select the corresponding option in the dropdown
+                defaultValue = value || "";
+                contributorsDropdown.val(defaultValue);
             });
 
-            // Initialize the source data and radio buttons
+            // Initialize the source data and dropdown
             initSource();
         });
     </script>
