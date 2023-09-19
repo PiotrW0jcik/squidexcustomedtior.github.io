@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>Food Startup Category</title>
+    <title>Contributors</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -15,17 +15,43 @@
             margin-bottom: 10px;
         }
 
-        .checkbox-group {
+        .radio-group {
             margin-bottom: 20px;
         }
 
         label {
-            display: inline-block;
-            margin-right: 10px;
+            display: block;
+            margin-bottom: 5px;
         }
 
-        input[type="checkbox"] {
-            margin-right: 5px;
+        input[type="radio"] {
+            display: none;
+        }
+
+        .radio-label {
+            position: relative;
+            padding-left: 30px;
+            cursor: pointer;
+        }
+
+        .radio-label::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 2px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007BFF; /* Border color for radio button */
+            border-radius: 50%;
+            background-color: white;
+        }
+
+        input[type="radio"]:checked + .radio-label::before {
+            background-color: #007BFF; /* Background color when selected */
+        }
+
+        input[type="radio"]:disabled + .radio-label {
+            color: #ccc; /* Text color for disabled radio button */
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
@@ -34,10 +60,10 @@
 
 <body>
     <div>
-        <div class="checkbox-group" id="ContentManagerGroup">
+        <div class="radio-group" id="ContentManagerGroup">
             <h2>Content Managers</h2>
         </div>
-        <div class="checkbox-group" id="ContentCreatorGroup">
+        <div class="radio-group" id="ContentCreatorGroup">
             <h2>Content Creators</h2>
         </div>
     </div>
@@ -64,27 +90,28 @@
                         let contributorName = item.contributorName;
                         let role = item.role;
 
-                        // Create a checkbox element for each contributor name
-                        let checkbox = $("<input type='checkbox'/>")
-                            .attr("id", "checkbox_" + i)
+                        // Create a radio button element for each contributor name
+                        let radio = $("<input type='radio'/>")
+                            .attr("id", "radio_" + i)
+                            .attr("name", role) // Use the role as the radio button group name
                             .attr("value", contributorName)
                             .prop("checked", defaultValue.includes(contributorName));
 
-                        let label = $("<label/>")
-                            .attr("for", "checkbox_" + i)
+                        let label = $("<label class='radio-label'/>")
+                            .attr("for", "radio_" + i)
                             .text(contributorName);
 
-                        // Add the checkbox to the appropriate container based on the role
+                        // Add the radio button to the appropriate container based on the role
                         if (role === "Content Manager") {
-                            contentManagerContainer.append(checkbox);
+                            contentManagerContainer.append(radio);
                             contentManagerContainer.append(label);
                         } else if (role === "Content Creator") {
-                            contentCreatorContainer.append(checkbox);
+                            contentCreatorContainer.append(radio);
                             contentCreatorContainer.append(label);
                         }
 
-                        // Add change event listener to handle checkbox changes
-                        checkbox.on("change", function () {
+                        // Add change event listener to handle radio button changes
+                        radio.on("change", function () {
                             updateSelectedContributors();
                         });
                     });
@@ -97,12 +124,12 @@
             function updateSelectedContributors() {
                 let selectedContributors = [];
 
-                // Find all checked checkboxes and add their values (contributor names) to the selectedContributors array
-                contentManagerContainer.find("input[type='checkbox']:checked").each(function () {
+                // Find the checked radio buttons and add their values (contributor names) to the selectedContributors array
+                contentManagerContainer.find("input[type='radio']:checked").each(function () {
                     selectedContributors.push($(this).val());
                 });
 
-                contentCreatorContainer.find("input[type='checkbox']:checked").each(function () {
+                contentCreatorContainer.find("input[type='radio']:checked").each(function () {
                     selectedContributors.push($(this).val());
                 });
 
@@ -111,25 +138,25 @@
             }
 
             field.onDisabled(function (disabled) {
-                contentManagerContainer.find("input[type='checkbox']").prop("disabled", disabled);
-                contentCreatorContainer.find("input[type='checkbox']").prop("disabled", disabled);
+                contentManagerContainer.find("input[type='radio']").prop("disabled", disabled);
+                contentCreatorContainer.find("input[type='radio']").prop("disabled", disabled);
             });
 
             field.onValueChanged(function (value) {
-                // Update the default value and check/uncheck checkboxes accordingly
+                // Update the default value and select/deselect radio buttons accordingly
                 defaultValue = value || [];
-                contentManagerContainer.find("input[type='checkbox']").each(function () {
+                contentManagerContainer.find("input[type='radio']").each(function () {
                     let contributorName = $(this).val();
                     $(this).prop("checked", defaultValue.includes(contributorName));
                 });
 
-                contentCreatorContainer.find("input[type='checkbox']").each(function () {
+                contentCreatorContainer.find("input[type='radio']").each(function () {
                     let contributorName = $(this).val();
                     $(this).prop("checked", defaultValue.includes(contributorName));
                 });
             });
 
-            // Initialize the source data and checkboxes
+            // Initialize the source data and radio buttons
             initSource();
         });
     </script>
